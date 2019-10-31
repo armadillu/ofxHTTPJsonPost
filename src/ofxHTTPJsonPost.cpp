@@ -17,15 +17,26 @@
 #include "Poco/URI.h"
 #include "Poco/Exception.h"
 
-ofxHTTPJsonPost::ofxHTTPJsonPost(){
+ofxHTTPJsonPost::ofxHTTPJsonPost(){}
 
+ofxHTTPJsonPost::~ofxHTTPJsonPost(){
+	clearQueue();
 }
 
-//std::async(std::launch::async, &QuuppaProject::getLocatorStatus, this, quuppaServer);
+
+void ofxHTTPJsonPost::cancelAllSubmissions(){
+	if(pendingPosts.size()){
+		ofLogWarning("ofxHTTPJsonPost") << "deleting " << pendingPosts.size() << " pending submissions!";
+		pendingPosts.clear();
+	}
+}
 
 void ofxHTTPJsonPost::clearQueue(){
 
-	ofLogNotice("ofxHTTPJsonPost") << "clearQueue...";
+	ofLogNotice("ofxHTTPJsonPost") << "clearQueue()...";
+	cancelAllSubmissions();
+	if(tasks.size())
+		ofLogNotice("ofxHTTPJsonPost") << "We may have to wait a bit, " << tasks.size() << " are currently executing.";
 	while (tasks.size()) {
 		update();
 	}
@@ -33,14 +44,12 @@ void ofxHTTPJsonPost::clearQueue(){
 
 
 string ofxHTTPJsonPost::getStatus(){
-
-	string status;
+	string status;//TODO: report # of queued items, running, etc
 	return status;
 }
 
 
 void ofxHTTPJsonPost::postJsonData(ofJson & jsonData, const string & url){
-
 	PostData job;
 	job.jsonData = jsonData;
 	job.url = url;
@@ -114,7 +123,7 @@ ofxHTTPJsonPost::PostData ofxHTTPJsonPost::runJob(PostData j){
 		std::istream& s = session.receiveResponse(response);
 		std::string respoStr(std::istreambuf_iterator<char>(s), {});
 
-		j.status = response.getStatus();
+		j.status = ofToString(response.getStatus());
 		j.reason = response.getReason();
 		j.response = respoStr;
 		j.ok = true;

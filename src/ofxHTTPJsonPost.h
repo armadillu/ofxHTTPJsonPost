@@ -15,6 +15,7 @@ class ofxHTTPJsonPost{
 public:
 	
 	ofxHTTPJsonPost();
+	~ofxHTTPJsonPost();
 
 	struct PostData{
 		ofJson jsonData;
@@ -34,6 +35,8 @@ public:
 
 	void setTimeout(float seconds){timeout = seconds;}
 	void setMaxThreads(int maxT){ maxThreads = ofClamp(maxT, 1, std::thread::hardware_concurrency());}
+
+	void cancelAllSubmissions();
 
 	ofFastEvent<ofxHTTPJsonPost::PostData> eventPostFinished;
 
