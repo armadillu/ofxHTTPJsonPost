@@ -123,10 +123,17 @@ ofxHTTPJsonPost::PostData ofxHTTPJsonPost::runJob(PostData j){
 		std::istream& s = session.receiveResponse(response);
 		std::string respoStr(std::istreambuf_iterator<char>(s), {});
 
-		j.status = ofToString(response.getStatus());
+		int status = response.getStatus();
+		j.status = ofToString(status);
 		j.reason = response.getReason();
 		j.response = respoStr;
-		j.ok = true;
+		if(status >= 200 && status < 300){
+			ofLogNotice("ofxHTTPJsonPost") << "Good response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason << " Response: " << respoStr;
+			j.ok = true;
+		}else{
+			ofLogError("ofxHTTPJsonPost") << "Bad response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason << " Response: " << respoStr;
+			j.ok = false;
+		}
 
 	}catch(std::exception e){
 		ofLogError("ErrorReports") << e.what();
