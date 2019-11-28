@@ -136,7 +136,7 @@ ofxHTTPJsonPost::PostData ofxHTTPJsonPost::runJob(PostData j){
 		}
 
 	}catch(std::exception e){
-		ofLogError("ErrorReports") << e.what();
+		ofLogError("ofxHTTPJsonPost") << "Exception at runJob() \"" << j.url << "\" - " <<  e.what();
 		j.status = "error";
 		j.ok = false;
 		j.reason = e.what();
