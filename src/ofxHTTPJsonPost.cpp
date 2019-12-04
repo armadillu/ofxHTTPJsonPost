@@ -128,7 +128,7 @@ ofxHTTPJsonPost::PostData ofxHTTPJsonPost::runJob(PostData j){
 		j.reason = response.getReason();
 		j.response = respoStr;
 		if(status >= 200 && status < 300){
-			ofLogNotice("ofxHTTPJsonPost") << "Good response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason << " Response: " << respoStr;
+			ofLogNotice("ofxHTTPJsonPost") << "Good response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason;
 			j.ok = true;
 		}else{
 			ofLogError("ofxHTTPJsonPost") << "Bad response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason << " Response: " << respoStr;
