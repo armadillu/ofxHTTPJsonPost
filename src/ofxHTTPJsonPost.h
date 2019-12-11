@@ -17,7 +17,7 @@ public:
 	ofxHTTPJsonPost();
 	~ofxHTTPJsonPost();
 
-	struct PostData{
+	struct PostDataJob{
 		ofJson jsonData;
 		string url;
 		string response;
@@ -25,11 +25,12 @@ public:
 		string reason;
 		bool ok = false;
 		float duration = 0;
+		size_t jobID;
 	};
 
 	void update();
 
-	void postJsonData(ofJson & jsonData, const string & http);
+	size_t postJsonData(ofJson & jsonData, const string & http); //returns ticketID
 
 	string getStatus();
 
@@ -38,19 +39,22 @@ public:
 
 	void cancelAllSubmissions();
 
-	ofFastEvent<ofxHTTPJsonPost::PostData> eventPostFinished;
+	ofFastEvent<ofxHTTPJsonPost::PostDataJob> eventPostFinished;
+	ofFastEvent<ofxHTTPJsonPost::PostDataJob> eventPostFailed;
 
 protected:
 
-	vector<PostData> pendingPosts;
-	vector<std::future<PostData>> tasks;
+	vector<PostDataJob> pendingJobs;
+	vector<std::future<PostDataJob>> tasks;
 
-	float timeout = 10;
+	float timeout = 2;
 	int maxThreads = 1;
 
 	//std::future<ofJson>
 
 	void clearQueue();
-	PostData runJob(PostData j);
+	PostDataJob runJob(PostDataJob j);
+
+	static size_t jobIDcounter;
 };
 

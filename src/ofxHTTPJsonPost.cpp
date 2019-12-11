@@ -17,6 +17,10 @@
 #include "Poco/URI.h"
 #include "Poco/Exception.h"
 
+
+size_t ofxHTTPJsonPost::jobIDcounter = 0;
+
+
 ofxHTTPJsonPost::ofxHTTPJsonPost(){}
 
 ofxHTTPJsonPost::~ofxHTTPJsonPost(){
@@ -25,9 +29,9 @@ ofxHTTPJsonPost::~ofxHTTPJsonPost(){
 
 
 void ofxHTTPJsonPost::cancelAllSubmissions(){
-	if(pendingPosts.size()){
-		ofLogWarning("ofxHTTPJsonPost") << "deleting " << pendingPosts.size() << " pending submissions!";
-		pendingPosts.clear();
+	if(pendingJobs.size()){
+		ofLogWarning("ofxHTTPJsonPost") << "deleting " << pendingJobs.size() << " pending submissions!";
+		pendingJobs.clear();
 	}
 }
 
@@ -49,11 +53,14 @@ string ofxHTTPJsonPost::getStatus(){
 }
 
 
-void ofxHTTPJsonPost::postJsonData(ofJson & jsonData, const string & url){
-	PostData job;
+size_t ofxHTTPJsonPost::postJsonData(ofJson & jsonData, const string & url){
+	PostDataJob job;
+	job.jobID = jobIDcounter; jobIDcounter++;
 	job.jsonData = jsonData;
 	job.url = url;
-	pendingPosts.push_back(job);
+	pendingJobs.push_back(job);
+	ofLogNotice() << "postJsonData() new job with jobID \"" << job.jobID << "\"";
+	return job.jobID;
 }
 
 
@@ -71,12 +78,12 @@ void ofxHTTPJsonPost::update(){
 
 	//spawn new jobs if pending
 	vector<size_t> spawnedJobs;
-	for(int i = 0; i < pendingPosts.size(); i++){
+	for(int i = 0; i < pendingJobs.size(); i++){
 		if(tasks.size() < maxThreads){
 			try{
-				tasks.push_back( std::async(std::launch::async, &ofxHTTPJsonPost::runJob, this, pendingPosts[i]));
+				tasks.push_back( std::async(std::launch::async, &ofxHTTPJsonPost::runJob, this, pendingJobs[i]));
 			}catch(exception e){
-				ofLogError("ofxHTTPJsonPost") << "Exception at async() " <<  e.what();
+				ofLogError("ofxHTTPJsonPost") << "Job \"" << pendingJobs[i].jobID << "\" Exception at async() " <<  e.what();
 			}
 			spawnedJobs.push_back(i);
 		}else{
@@ -86,12 +93,12 @@ void ofxHTTPJsonPost::update(){
 
 	//removed newly spawned jobs
 	for(int i = spawnedJobs.size() - 1; i >= 0; i--){
-		pendingPosts.erase(pendingPosts.begin() + spawnedJobs[i]);
+		pendingJobs.erase(pendingJobs.begin() + spawnedJobs[i]);
 	}
 }
 
 
-ofxHTTPJsonPost::PostData ofxHTTPJsonPost::runJob(PostData j){
+ofxHTTPJsonPost::PostDataJob ofxHTTPJsonPost::runJob(PostDataJob j){
 
 	#ifdef TARGET_WIN32
 	#elif defined(TARGET_LINUX)
@@ -128,19 +135,20 @@ ofxHTTPJsonPost::PostData ofxHTTPJsonPost::runJob(PostData j){
 		j.reason = response.getReason();
 		j.response = respoStr;
 		if(status >= 200 && status < 300){
-			ofLogNotice("ofxHTTPJsonPost") << "Good response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason;
+			ofLogNotice("ofxHTTPJsonPost") << "Job \"" << j.jobID << "\" Good response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason;
 			j.ok = true;
 		}else{
-			ofLogError("ofxHTTPJsonPost") << "Bad response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason << " Response: " << respoStr;
-			ofLogError("ofxHTTPJsonPost") << "We sent this JSON data: " << j.jsonData.dump();
+			ofLogError("ofxHTTPJsonPost") << "Job \"" << j.jobID << "\" Bad response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason << " Response: " << respoStr;
+			ofLogError("ofxHTTPJsonPost") << "Job \"" << j.jobID << "\" We sent this JSON data: " << j.jsonData.dump();
 			j.ok = false;
 		}
 
 	}catch(std::exception e){
-		ofLogError("ofxHTTPJsonPost") << "Exception at runJob() \"" << j.url << "\" - " <<  e.what();
+		ofLogError("ofxHTTPJsonPost") << "Job \"" << j.jobID << "\" Exception at runJob() \"" << j.url << "\" - " <<  e.what();
 		j.status = "error";
 		j.ok = false;
 		j.reason = e.what();
+		ofNotifyEvent(eventPostFailed, j, this);
 	}
 
 	j.duration = ofGetElapsedTimef() - j.duration;
