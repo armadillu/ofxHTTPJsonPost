@@ -132,6 +132,7 @@ ofxHTTPJsonPost::PostData ofxHTTPJsonPost::runJob(PostData j){
 			j.ok = true;
 		}else{
 			ofLogError("ofxHTTPJsonPost") << "Bad response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason << " Response: " << respoStr;
+			ofLogError("ofxHTTPJsonPost") << "We sent this JSON data: " << j.jsonData.dump();
 			j.ok = false;
 		}
 
