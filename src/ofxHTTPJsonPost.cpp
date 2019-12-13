@@ -113,6 +113,8 @@ ofxHTTPJsonPost::PostDataJob ofxHTTPJsonPost::runJob(PostDataJob j){
 		Poco::URI uri(j.url);
 
 		Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
+		session.setTimeout( Poco::Timespan(timeout, 0) );
+
 		std::string path(uri.getPathAndQuery());
 		if (path.empty()) path = "/";
 
