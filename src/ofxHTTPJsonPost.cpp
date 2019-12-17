@@ -59,7 +59,7 @@ size_t ofxHTTPJsonPost::postJsonData(ofJson & jsonData, const string & url){
 	job.jsonData = jsonData;
 	job.url = url;
 	pendingJobs.push_back(job);
-	ofLogNotice() << "postJsonData() new job with jobID \"" << job.jobID << "\"";
+	ofLogNotice("ofxHTTPJsonPost") << "postJsonData() new job with jobID \"" << job.jobID << "\"";
 	return job.jobID;
 }
 
