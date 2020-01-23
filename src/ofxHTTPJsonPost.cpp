@@ -107,6 +107,8 @@ ofxHTTPJsonPost::PostDataJob ofxHTTPJsonPost::runJob(PostDataJob j){
 	pthread_setname_np("ofxHTTPJsonPost");
 	#endif
 
+	static std::mutex mutex;
+
 	try{
 
 		j.duration = ofGetElapsedTimef();
@@ -136,6 +138,8 @@ ofxHTTPJsonPost::PostDataJob ofxHTTPJsonPost::runJob(PostDataJob j){
 		j.status = ofToString(status);
 		j.reason = response.getReason();
 		j.response = respoStr;
+
+		mutex.lock();
 		if(status >= 200 && status < 300){
 			ofLogNotice("ofxHTTPJsonPost") << "Job \"" << j.jobID << "\" Good response from server " << j.url << " Status: " << j.status <<  " Reason: " << j.reason;
 			j.ok = true;
@@ -144,9 +148,12 @@ ofxHTTPJsonPost::PostDataJob ofxHTTPJsonPost::runJob(PostDataJob j){
 			ofLogError("ofxHTTPJsonPost") << "Job \"" << j.jobID << "\" We sent this JSON data: " << j.jsonData.dump();
 			j.ok = false;
 		}
+		mutex.unlock();
 
 	}catch(std::exception e){
+		mutex.lock();
 		ofLogError("ofxHTTPJsonPost") << "Job \"" << j.jobID << "\" Exception at runJob() \"" << j.url << "\" - " <<  e.what();
+		mutex.unlock();
 		j.status = "error";
 		j.ok = false;
 		j.reason = e.what();
