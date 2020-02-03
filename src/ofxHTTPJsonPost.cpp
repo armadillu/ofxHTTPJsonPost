@@ -24,6 +24,7 @@ size_t ofxHTTPJsonPost::jobIDcounter = 0;
 ofxHTTPJsonPost::ofxHTTPJsonPost(){}
 
 ofxHTTPJsonPost::~ofxHTTPJsonPost(){
+	ofLogNotice("ofxHTTPJsonPost") << "~ofxHTTPJsonPost() with " << tasks.size() << " running tasks and " << pendingJobs.size() << " pending";
 	clearQueue();
 }
 
