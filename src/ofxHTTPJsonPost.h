@@ -26,11 +26,13 @@ public:
 		bool ok = false;
 		float duration = 0;
 		size_t jobID;
+		map<string,string> customHeaders;
 	};
 
 	void update();
 
 	size_t postJsonData(ofJson & jsonData, const string & http); //returns ticketID
+	size_t postJsonData(ofJson & jsonData, const string & http, map<string,string> & customHeaders); //returns ticketID
 
 	string getStatus();
 

@@ -55,10 +55,18 @@ string ofxHTTPJsonPost::getStatus(){
 
 
 size_t ofxHTTPJsonPost::postJsonData(ofJson & jsonData, const string & url){
+	static map<string,string> empty;
+	return postJsonData(jsonData, url, empty);
+}
+
+
+size_t ofxHTTPJsonPost::postJsonData(ofJson & jsonData, const string & url, map<string,string> & customHeaders){
+
 	PostDataJob job;
 	job.jobID = jobIDcounter; jobIDcounter++;
 	job.jsonData = jsonData;
 	job.url = url;
+	job.customHeaders = customHeaders;
 	pendingJobs.push_back(job);
 	ofLogNotice("ofxHTTPJsonPost") << "postJsonData() new job with jobID \"" << job.jobID << "\"";
 	return job.jobID;
@@ -128,6 +136,9 @@ ofxHTTPJsonPost::PostDataJob ofxHTTPJsonPost::runJob(PostDataJob j){
 
 		request.setContentType("application/json");
 		request.setContentLength(jsonStr.size());
+		for(auto & it : j.customHeaders){
+			request.set(it.first, it.second);
+		}
 		std::ostream& o = session.sendRequest(request);
 
 		o << jsonStr; //push json into ostream
