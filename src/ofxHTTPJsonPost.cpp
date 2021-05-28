@@ -50,6 +50,8 @@ void ofxHTTPJsonPost::clearQueue(){
 
 string ofxHTTPJsonPost::getStatus(){
 	string status;//TODO: report # of queued items, running, etc
+	status = "Pending Jobs: " + ofToString(pendingJobs.size());
+	status += "\nActive Jobs: " + ofToString(tasks.size());
 	return status;
 }
 
