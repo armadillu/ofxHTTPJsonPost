@@ -93,7 +93,7 @@ void ofxHTTPJsonPost::update(){
 		if(tasks.size() < maxThreads){
 			try{
 				tasks.push_back( std::async(std::launch::async, &ofxHTTPJsonPost::runJob, this, pendingJobs[i]));
-			}catch(exception e){
+			}catch(std::exception e){
 				ofLogError("ofxHTTPJsonPost") << "Job \"" << pendingJobs[i].jobID << "\" Exception at async() " <<  e.what();
 			}
 			spawnedJobs.push_back(i);
