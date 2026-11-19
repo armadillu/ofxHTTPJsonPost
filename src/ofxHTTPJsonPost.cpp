@@ -7,6 +7,7 @@
 //
 
 #include "ofxHTTPJsonPost.h"
+#include <utility>
 
 #include "Poco/Net/HTTPClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -69,9 +70,10 @@ size_t ofxHTTPJsonPost::postJsonData(ofJson & jsonData, const string & url, map<
 	job.jsonData = jsonData;
 	job.url = url;
 	job.customHeaders = customHeaders;
-	pendingJobs.push_back(job);
-	ofLogNotice("ofxHTTPJsonPost") << "postJsonData() new job with jobID \"" << job.jobID << "\"";
-	return job.jobID;
+	const auto jobID = job.jobID;
+	pendingJobs.push_back(std::move(job));
+	ofLogNotice("ofxHTTPJsonPost") << "postJsonData() new job with jobID \"" << jobID << "\"";
+	return jobID;
 }
 
 
@@ -91,10 +93,11 @@ void ofxHTTPJsonPost::update(){
 	vector<size_t> spawnedJobs;
 	for(int i = 0; i < pendingJobs.size(); i++){
 		if(tasks.size() < maxThreads){
+			const auto jobID = pendingJobs[i].jobID;
 			try{
-				tasks.push_back( std::async(std::launch::async, &ofxHTTPJsonPost::runJob, this, pendingJobs[i]));
-			}catch(std::exception e){
-				ofLogError("ofxHTTPJsonPost") << "Job \"" << pendingJobs[i].jobID << "\" Exception at async() " <<  e.what();
+				tasks.push_back(std::async(std::launch::async, &ofxHTTPJsonPost::runJob, this, std::move(pendingJobs[i])));
+			}catch(const std::exception& e){
+				ofLogError("ofxHTTPJsonPost") << "Job \"" << jobID << "\" Exception at async() " <<  e.what();
 			}
 			spawnedJobs.push_back(i);
 		}else{
@@ -151,7 +154,7 @@ ofxHTTPJsonPost::PostDataJob ofxHTTPJsonPost::runJob(PostDataJob j){
 		int status = response.getStatus();
 		j.status = ofToString(status);
 		j.reason = response.getReason();
-		j.response = respoStr;
+		j.response = std::move(respoStr);
 
 		mutex.lock();
 		if(status >= 200 && status < 300){
